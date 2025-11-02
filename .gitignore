@@ -1,5 +1,63 @@
+# C/C++ 编译文件
 *.cpp
+*.o
+*.obj
+
+# 构建目录
 build/
+dist/
+
+# Python 编译文件
+__pycache__/
+*.py[cod]
+*$py.class
 *.so
-*.egg-info/
+
+# 虚拟环境
 venv/
+.venv/
+env/
+ENV/
+
+# Python 包
+*.egg-info/
+*.egg
+.eggs/
+
+# Cython 生成的文件
+*.c
+*.cpp
+*.html
+
+# CUDA 编译文件
+*.ptx
+*.cubin
+*.fatbin
+
+# IDE 和编辑器
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# 系统文件
+.DS_Store
+Thumbs.db
+
+# 测试覆盖率
+.coverage
+htmlcov/
+.pytest_cache/
+
+# 日志文件
+*.log
+
+# 临时文件
+*.tmp
+*.temp
+
+# UV 锁定文件（如果不需要版本控制）
+# uv.lock
+
+*.npy

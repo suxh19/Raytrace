@@ -1,7 +1,6 @@
 import sys, os
 from os.path import join as pjoin
-from setuptools import setup
-from distutils.extension import Extension
+from setuptools import setup, Extension
 import subprocess
 import platform
 
@@ -29,7 +28,7 @@ def locate_cuda():
 
     # first check if the CUDAHOME env variable is in use
     if 'CUDAHOME' in os.environ:
-        home = os.environ['CUDA_HOME']
+        home = os.environ['CUDAHOME']
         nvcc = pjoin(home, 'bin', 'nvcc')
     else:
         # otherwise, search the PATH for NVCC
@@ -62,7 +61,7 @@ def customize_compiler_for_nvcc(self, cudaconfig):
 
     # save references to the default compiler_so and _compile methods
     default_compiler_so = self.compiler_so
-    super = self._compile
+    original_compile = self._compile
 
     # now redefine the _compile method. This gets executed for each
     # object but distutils doesn't have the ability to change compilers
@@ -71,14 +70,13 @@ def customize_compiler_for_nvcc(self, cudaconfig):
         if os.path.splitext(src)[1] == '.cu':
             # use the cuda for .cu files
             self.set_executable('compiler_so', cudaconfig['nvcc'])
-            # use only a subset of the extra_postargs, which are 1-1 translated
-            # from the extra_compile_args in the Extension class
-            postargs = extra_postargs['nvcc']
+            # use CUDA-specific compiler arguments
+            postargs = ['-arch=sm_50', '--ptxas-options=-v', '-c', '--compiler-options', "'-fPIC'"]
         else:
-            postargs = extra_postargs['gcc']
+            postargs = extra_postargs
 
 
-        super(obj, src, ext, cc_args, postargs, pp_opts)
+        original_compile(obj, src, ext, cc_args, postargs, pp_opts)
         # reset the default compiler_so, which we might have changed for cuda
         self.compiler_so = default_compiler_so
 
@@ -94,9 +92,8 @@ def install_setup_requirements(reqs):
 #####################
 CUDA = locate_cuda()
 def generate_custom_build_ext():
-    # install build dependencies
-    install_setup_requirements(['cython'])
-    from Cython.Distutils import build_ext
+    # import Cython - now available due to build-system requirements
+    from Cython.Distutils.build_ext import build_ext
     # run the customize_compiler by subclassing Cython's build_ext class and adding cuda pre-compilation
     class custom_build_ext(build_ext):
         def build_extensions(self):
@@ -108,14 +105,13 @@ def generate_cuda_extension():
     if platform.system() == 'Windows':
         raise Exception("Cuda Raytracing extensions on Windows are not supported. Falling back to CPU version")
 
-    # install build dependencies
-    install_setup_requirements(['numpy'])
-    # Obtain the numpy include directory. This logic works across numpy versions.
+    # import numpy - now available due to build-system requirements
     import numpy
+    # Obtain the numpy include directory. This logic works across numpy versions.
     try:
         numpy_include = numpy.get_include()
     except AttributeError:
-        numpy_include = numpy.get_numpy_include()
+        numpy_include = numpy.get_include()
 
     # create a c++/CUDA extension module (library) to build during setup and include in package
     # find exact cuart.so to use - resolves conflict with cuda shared libs coming from other py packages
@@ -129,8 +125,7 @@ def generate_cuda_extension():
                     # this syntax is specific to this build system
                     # we're only going to use certain compiler args with nvcc and not with gcc
                     # the implementation of this trick is in customize_compiler() below
-                    extra_compile_args={'gcc': [],
-                                        'nvcc': ['-arch=sm_30', '--ptxas-options=-v', '-c', '--compiler-options', "'-fPIC'"]},
+                    extra_compile_args=['-arch=sm_50', '--ptxas-options=-v', '-c', '--compiler-options', "'-fPIC'"],
                     include_dirs = [numpy_include, CUDA['include'], pjoin('raytrace', 'src')])
     return ext
 

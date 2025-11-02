@@ -20,7 +20,7 @@ isocenter = np.divide(vol.shape[::-1],2.0)*spacing
 
 common_source = isocenter.copy()
 common_source[1] -= sad
-sources = np.ones((np.product(det_dims), 3))*common_source
+sources = np.ones((np.prod(det_dims), 3))*common_source
 xx, zz = np.meshgrid(
     np.arange(-det_dims[0]*det_spacing[0]//2, det_dims[0]*det_spacing[0]//2, det_spacing[0]) + isocenter[0] + det_spacing[0]/2,
     np.arange(-det_dims[1]*det_spacing[1]//2, det_dims[1]*det_spacing[1]//2, det_spacing[1]) + isocenter[2] + det_spacing[1]/2,
