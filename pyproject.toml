@@ -11,5 +11,6 @@ authors = [
 ]
 dependencies = [
     "numpy",
+    "torch",
 ]
 requires-python = ">=3.8"
