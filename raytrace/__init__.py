@@ -20,15 +20,22 @@ def raytrace(sources, dests, vol, vol_start, vol_spacing, stop_early=-1):
     - 如果输入是np.ndarray，返回np.ndarray
     
     Args:
-        sources: (N, 3) 射线起点坐标
-        dests: (N, 3) 射线终点坐标
-        vol: (D, H, W) 体积数据
-        vol_start: (3,) 体积起始坐标
-        vol_spacing: (3,) 体素间距
+        sources: (N, 3) 射线起点坐标 (x, y, z)
+        dests: (N, 3) 射线终点坐标 (x, y, z)
+        vol: (D, H, W) 体积数据（深度, 高度, 宽度）
+        vol_start: (3,) 体积起始坐标 (x, y, z)
+        vol_spacing: (3,) 体素间距 (spacing_x, spacing_y, spacing_z) = (spacing_W, spacing_H, spacing_D)
+            注意：必须使用 (x, y, z) 顺序，对应 (W, H, D)
         stop_early: 提前停止阈值
     
     Returns:
         (N,) 每条射线的路径长度
+    
+    坐标系统说明：
+        - vol 形状为 (D, H, W)
+        - 但 vol_start 和 vol_spacing 使用 (x, y, z) = (W, H, D) 顺序
+        - 例如：如果 vol_spacing_DHW = (10, 0.5, 0.5)，则应传入
+          vol_spacing = (0.5, 0.5, 10)
     """
     try:
         import torch

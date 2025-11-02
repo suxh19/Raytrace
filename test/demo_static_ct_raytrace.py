@@ -33,14 +33,19 @@ phantom_2d = data.shepp_logan_phantom()
 phantom_size = phantom_2d.shape[0]
 
 # 体积配置
-vol_size = (3, 512, 512)
-vol_spacing = (0.5, 0.5, 0.5)
+vol_size = (1, 512, 512)  # (D, H, W)
+vol_spacing_DHW = (10, 0.5, 0.5)  # (D, H, W) 顺序
 vol_center = torch.tensor([0.0, 0.0, 0.0], device=device)
+
+# 计算 vol_start（按 x, y, z 顺序）
 vol_start = vol_center - torch.tensor([
-    (vol_size[2] - 1) * vol_spacing[2] / 2,
-    (vol_size[1] - 1) * vol_spacing[1] / 2,
-    (vol_size[0] - 1) * vol_spacing[0] / 2,
+    (vol_size[2] - 1) * vol_spacing_DHW[2] / 2,  # x (W方向)
+    (vol_size[1] - 1) * vol_spacing_DHW[1] / 2,  # y (H方向)
+    (vol_size[0] - 1) * vol_spacing_DHW[0] / 2,  # z (D方向)
 ], device=device)
+
+# raytrace 函数需要 (W, H, D) 顺序的 spacing
+vol_spacing = (vol_spacing_DHW[2], vol_spacing_DHW[1], vol_spacing_DHW[0])
 
 # 创建3D体积（先用numpy处理图像，再转为torch）
 vol_np = np.zeros(vol_size, dtype=np.float32)

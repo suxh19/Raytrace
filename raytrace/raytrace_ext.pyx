@@ -42,11 +42,20 @@ def raytrace(sources, dests, vol, vol_start, vol_spacing, stop_early=-1):
     Args:
         sources ([(x,y,z), ...]: list of 3d coordinates indicating ray startpoints
         dests   ([(x,y,z), ...]: list of 3d coordinates indicating ray endpoints
-        vol (np.array): volume containing voxels through which to raytrace
+        vol (np.array): volume containing voxels through which to raytrace, shape (D, H, W)
         vol_start (float_x, float_y, float_z): coordinates of center of first voxel in vol
         vol_spacing (float_x, float_y, float_z): spacing between adjacent voxels in volume (assumes direct adjacency)
+            IMPORTANT: Must be in (x, y, z) = (W, H, D) order to match vol_start coordinate system
+            If you define vol_spacing as (spacing_D, spacing_H, spacing_W), you must reverse it:
+            vol_spacing = (spacing_W, spacing_H, spacing_D) before passing to this function
         stop_early: if <=0: trace through entire volume, if >0, stop after ray accumulates the value specified in this variable
             The output value in each detector element is not guaranteed to be equal to the value requested
+    
+    Note:
+        Coordinate system convention:
+        - vol shape is (D, H, W) in Python (depth, height, width)
+        - Internally converted to (x, y, z) = (W, H, D) for CUDA processing
+        - vol_start and vol_spacing must use (x, y, z) ordering
     """
     for v in [sources, dests, vol]:
         assert isinstance(v, np.ndarray)
