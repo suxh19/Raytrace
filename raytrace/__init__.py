@@ -2,6 +2,11 @@ import logging
 import numpy as np
 
 from .raytrace_ext import raytrace as raytrace_numpy
+try:
+    from .torch_native import raytrace_torch as _raytrace_torch
+    _has_torch_native = True
+except Exception:
+    _has_torch_native = False
 
 def enableDebugOutput():
     """Setup the library logger from a user application"""
@@ -42,29 +47,20 @@ def raytrace(sources, dests, vol, vol_start, vol_spacing, stop_early=-1):
         is_torch = isinstance(sources, torch.Tensor)
     except ImportError:
         is_torch = False
-    
+    if is_torch and _has_torch_native and sources.is_cuda and dests.is_cuda and vol.is_cuda:
+        return _raytrace_torch(sources, dests, vol, vol_start, vol_spacing, stop_early)
     if is_torch:
-        # 保存原始设备和数据类型
         device = sources.device
         dtype = sources.dtype
-        
-        # 转换为numpy进行计算
         sources_np = sources.detach().cpu().numpy()
         dests_np = dests.detach().cpu().numpy()
         vol_np = vol.detach().cpu().numpy()
-        
-        # 处理vol_start和vol_spacing
         if isinstance(vol_start, torch.Tensor):
             vol_start = tuple(vol_start.detach().cpu().numpy())
         if isinstance(vol_spacing, torch.Tensor):
             vol_spacing = tuple(vol_spacing.detach().cpu().numpy())
-        
-        # 调用numpy版本
         result_np = raytrace_numpy(sources_np, dests_np, vol_np, vol_start, vol_spacing, stop_early)
-        
-        # 转换回torch
         result = torch.from_numpy(result_np).to(device=device, dtype=dtype)
         return result
     else:
-        # 直接调用numpy版本
         return raytrace_numpy(sources, dests, vol, vol_start, vol_spacing, stop_early)

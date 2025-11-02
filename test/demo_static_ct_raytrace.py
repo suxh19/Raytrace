@@ -34,7 +34,7 @@ phantom_size = phantom_2d.shape[0]
 
 # 体积配置
 vol_size = (1, 512, 512)  # (D, H, W)
-vol_spacing_DHW = (10, 0.5, 0.5)  # (D, H, W) 顺序
+vol_spacing_DHW = (1, 0.5, 0.5)  # (D, H, W) 顺序
 vol_center = torch.tensor([0.0, 0.0, 0.0], device=device)
 
 # 计算 vol_start（按 x, y, z 顺序）
