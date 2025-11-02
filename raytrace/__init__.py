@@ -1,11 +1,7 @@
 import logging
 
-try:
-    from .raytrace_ext import raytrace, beamtrace
-except ImportError:
-    from .raytracers import raytrace, beamtrace
-
-from .raytracers import siddonraytracer, NonIntersectingRayError, spottrace
+from .raytrace_ext import raytrace, beamtrace
+from .geometry import rotateAroundAxisAtOriginRHS, inverseRotateBeamAtOriginRHS
 
 def enableDebugOutput():
     """Setup the library logger from a user application"""
