@@ -34,7 +34,7 @@ def main():
 
     vol_np = np.zeros(vol_size, dtype=np.float32)
     scale_factor = 512 / phantom_size
-    phantom_resized = zoom(phantom_2d, scale_factor, order=3).astype(np.float32)
+    phantom_resized = np.asarray(zoom(phantom_2d, scale_factor, order=3), dtype=np.float32)
     for z in range(vol_size[0]):
         vol_np[z, :, :] = phantom_resized
     vol = torch.from_numpy(vol_np).float().to(device)

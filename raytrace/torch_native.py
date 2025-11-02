@@ -28,44 +28,54 @@ _ext = None
 def _get_ext():
     global _ext
     if _ext is None:
-        _ext = _build_extension()
+        try:
+            _ext = _build_extension()
+        except Exception as e:
+            raise RuntimeError(f'Failed to build CUDA extension: {e}') from e
+    if _ext is None:
+        raise RuntimeError('Extension is None after build')
     return _ext
 
 
+def _to_float3(param):
+    """将参数转换为长度为3的浮点数列表"""
+    if torch.is_tensor(param):
+        param = param.detach().cpu().tolist()
+    if len(param) != 3:
+        raise ValueError(f'parameter must be length-3 sequence (x, y, z), got {len(param)}')
+    return [float(param[0]), float(param[1]), float(param[2])]
+
+def _validate_shape(tensor, expected_shape, name):
+    """验证张量形状"""
+    if tensor.ndim != len(expected_shape):
+        raise ValueError(f'{name} must have {len(expected_shape)} dimensions, got {tensor.ndim}')
+    for i, (actual, expected) in enumerate(zip(tensor.shape, expected_shape)):
+        if expected is not None and actual != expected:
+            raise ValueError(f'{name} shape[{i}] must be {expected}, got {actual}')
+
 def raytrace_torch(sources, dests, vol, vol_start, vol_spacing, stop_early: float = -1.0):
-    if not (torch.is_tensor(sources) and torch.is_tensor(dests) and torch.is_tensor(vol)):
+    # 验证输入类型和设备
+    if not all(torch.is_tensor(t) for t in (sources, dests, vol)):
         raise TypeError('sources, dests, vol must be torch.Tensor')
-
-    if sources.device.type != 'cuda' or dests.device.type != 'cuda' or vol.device.type != 'cuda':
+    if not all(t.device.type == 'cuda' for t in (sources, dests, vol)):
         raise ValueError('sources, dests, vol must be CUDA tensors')
-
-    if sources.dtype != torch.float32 or dests.dtype != torch.float32 or vol.dtype != torch.float32:
+    if not all(t.dtype == torch.float32 for t in (sources, dests, vol)):
         raise TypeError('sources, dests, vol must be float32')
-
-    if sources.ndim != 2 or sources.shape[1] != 3:
-        raise ValueError('sources must have shape [N, 3]')
-    if dests.ndim != 2 or dests.shape[1] != 3:
-        raise ValueError('dests must have shape [N, 3]')
-    if vol.ndim != 3:
-        raise ValueError('vol must have shape [D, H, W]')
-
-    # Normalize vol_start / vol_spacing to Python floats (x,y,z)
-    if torch.is_tensor(vol_start):
-        vol_start = vol_start.detach().cpu().tolist()
-    if torch.is_tensor(vol_spacing):
-        vol_spacing = vol_spacing.detach().cpu().tolist()
-    if len(vol_start) != 3 or len(vol_spacing) != 3:
-        raise ValueError('vol_start and vol_spacing must be length-3 sequences (x, y, z)')
-
-    sources_c = sources.contiguous()
-    dests_c = dests.contiguous()
-    vol_c = vol.contiguous()
-
+    
+    # 验证形状
+    _validate_shape(sources, (None, 3), 'sources')
+    _validate_shape(dests, (None, 3), 'dests')
+    _validate_shape(vol, (None, None, None), 'vol')
+    
+    # 转换参数为浮点数列表
+    start = _to_float3(vol_start)
+    spacing = _to_float3(vol_spacing)
+    
+    # 调用 C++ 扩展
     ext = _get_ext()
-    rpl = ext.raytrace_forward(
-        sources_c, dests_c, vol_c,
-        float(vol_start[0]), float(vol_start[1]), float(vol_start[2]),
-        float(vol_spacing[0]), float(vol_spacing[1]), float(vol_spacing[2]),
-        float(stop_early),
+    return ext.raytrace_forward(
+        sources.contiguous(), dests.contiguous(), vol.contiguous(),
+        start[0], start[1], start[2],
+        spacing[0], spacing[1], spacing[2],
+        float(stop_early)
     )
-    return rpl
