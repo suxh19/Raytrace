@@ -95,35 +95,32 @@ for i in range(768, 776):
     dst = ray_dests[i][:2].cpu().numpy()
     print(f"  射线 {i}: 源点 {src} -> 探测器 {dst}")
 
-# 执行射线追踪（可选，计算量大）
-compute_full = input("\n是否计算完整投影矩阵？(98304条射线) [y/N]: ")
+# 执行射线追踪
+print("\n正在计算完整投影矩阵...")
 
-if compute_full.lower() == 'y':
-    print("\n正在计算完整投影矩阵...")
-    
-    # 一次性计算所有射线（raytrace现在支持torch输入输出）
-    rpl_flat = raytrace(ray_sources, ray_dests, vol, vol_start, vol_spacing)
-    
-    # 重塑为 128×768 的投影矩阵
-    projections = rpl_flat.reshape((sources.shape[0], detectors.shape[0]))
-    
-    print(f"完成! 投影矩阵形状: {projections.shape}")
-    print(f"投影值范围: [{projections.min().item():.2f}, {projections.max().item():.2f}]")
-    
-    # 保存投影数据（转换为numpy保存）
-    projections_np = projections.cpu().numpy()
-    np.save('test/full_projections.npy', projections_np)
-    print(f"完整投影矩阵已保存到: test/full_projections.npy")
-    
-    # 显示投影矩阵
-    fig, ax = plt.subplots(1, 1, figsize=(12, 6))
-    im = ax.imshow(projections_np, aspect='auto', cmap='gray', origin='lower')
-    ax.set_xlabel('Detector Pixel Index')
-    ax.set_ylabel('Source Index')
-    ax.set_title('CT Projection Matrix (128×768) - PyTorch Version')
-    plt.colorbar(im, ax=ax)
-    plt.savefig('test/static_ct_raytrace_torch.png', dpi=150, bbox_inches='tight')
-    plt.show()
+# 一次性计算所有射线（raytrace现在支持torch输入输出）
+rpl_flat = raytrace(ray_sources, ray_dests, vol, vol_start, vol_spacing)
+
+# 重塑为 128×768 的投影矩阵
+projections = rpl_flat.reshape((sources.shape[0], detectors.shape[0]))
+
+print(f"完成! 投影矩阵形状: {projections.shape}")
+print(f"投影值范围: [{projections.min().item():.2f}, {projections.max().item():.2f}]")
+
+# 保存投影数据（转换为numpy保存）
+projections_np = projections.cpu().numpy()
+np.save('test/full_projections.npy', projections_np)
+print(f"完整投影矩阵已保存到: test/full_projections.npy")
+
+# 显示投影矩阵
+fig, ax = plt.subplots(1, 1, figsize=(12, 6))
+im = ax.imshow(projections_np, aspect='auto', cmap='gray', origin='lower')
+ax.set_xlabel('Detector Pixel Index')
+ax.set_ylabel('Source Index')
+ax.set_title('CT Projection Matrix (128x768) - PyTorch Version')
+plt.colorbar(im, ax=ax)
+plt.savefig('test/static_ct_raytrace_torch.png', dpi=150, bbox_inches='tight')
+plt.show()
 
 print("\n总结:")
 print("✓ 使用 PyTorch 代替 NumPy")
