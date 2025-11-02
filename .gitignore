@@ -56,8 +56,45 @@ htmlcov/
 # 临时文件
 *.tmp
 *.temp
+*.jpg
+*.png
+*.jpeg
 
 # UV 锁定文件（如果不需要版本控制）
 # uv.lock
 
 *.npy
+
+# 数据文件
+*.dat
+*.csv
+*.json
+*.xml
+*.yaml
+*.yml
+
+# Jupyter Notebook
+*.ipynb
+
+# PyTorch 模型文件
+*.pth
+*.pt
+
+# 备份文件
+*.bak
+*.backup
+
+# 压缩文件
+*.zip
+*.tar.gz
+*.rar
+
+# 文档构建
+docs/_build/
+.sphinx/
+
+# 性能分析文件
+*.prof
+
+# 内存转储
+*.core
