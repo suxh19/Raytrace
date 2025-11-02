@@ -27,7 +27,7 @@ phantom_2d = data.shepp_logan_phantom()
 phantom_size = phantom_2d.shape[0]
 
 # 体积配置
-vol_size = (128, 512, 512)
+vol_size = (3, 512, 512)
 vol_spacing = (0.5, 0.5, 0.5)
 vol_center = np.array([0.0, 0.0, 0.0])
 vol_start = vol_center - np.array([
